@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Online Movie Ticket Booking</title>
+<style>
+body {
+  margin: 0;
+  font-family: 'Arial', sans-serif;
+  background: url('https://images.unsplash.com/photo-1515169067863-8c43c1db0b2d?auto=format&fit=crop&w=1740&q=80') no-repeat center center fixed;
+  background-size: cover;
+  color: #fff;
+}
+
+/* LOGIN PAGE */
+#loginPage {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  z-index: 1000;
+}
+
+#loginPage h1 { font-size: 3em; margin-bottom: 20px; animation: fadeInDown 1s; }
+@keyframes fadeInDown { from {opacity:0; transform:translateY(-50px);} to {opacity:1; transform:translateY(0);} }
+
+#loginPage input {
+  padding: 10px; margin: 10px 0; width: 250px;
+  border: none; border-radius: 5px;
+}
+
+#loginPage button {
+  padding: 10px 20px; background-color: #ff9800; border: none;
+  border-radius: 5px; cursor: pointer; font-weight: bold; color: #000;
+  transition:0.3s;
+}
+
+#loginPage button:hover { background-color: #ffa726; }
+
+/* HEADER */
+header {
+  background-color: rgba(0,0,0,0.7);
+  padding: 15px; text-align: center; font-size: 2em; font-weight: bold;
+  animation: fadeIn 1s;
+}
+
+@keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+
+/* MOVIE CARDS */
+.movies {
+  display: flex; flex-wrap: wrap; justify-content: center; padding: 20px; gap: 20px;
+  animation: fadeIn 1s;
+}
+
+.movie-card {
+  background-color: rgba(0,0,0,0.7);
+  border-radius: 15px; overflow: hidden; width: 300px; cursor: pointer;
+  transition: transform 0.4s, box-shadow 0.4s; position: relative;
+}
+
+.movie-card:hover { transform: scale(1.1); box-shadow: 0 0 20px #ff9800; }
+
+.movie-card img { width:100%; height:400px; object-fit:cover; }
+.movie-card h3 { margin:10px; text-align:center; }
+
+/* WELCOME MESSAGE */
+#welcomeMsg { text-align:center; margin:10px; font-size:1.5em; }
+
+/* MODAL */
+.modal {
+  display:none; position:fixed; z-index:500; left:0; top:0; width:100%; height:100%;
+  overflow:auto; background-color: rgba(0,0,0,0.85); animation: fadeIn 0.5s;
+}
+
+.modal-content {
+  background-color: #222; margin: 3% auto; padding: 20px; border-radius: 15px;
+  width: 90%; max-width: 600px; position: relative; animation: slideIn 0.5s;
+}
+
+@keyframes slideIn { from {transform:translateY(-50px);opacity:0;} to{transform:translateY(0);opacity:1;} }
+
+.close { color:#fff; position:absolute; top:10px; right:20px; font-size:28px; cursor:pointer; }
+
+.showtimes { display:flex; flex-wrap:wrap; gap:10px; margin:10px 0; }
+
+.showtime {
+  padding:8px 12px; background-color:#444; border-radius:5px; cursor:pointer; transition:0.3s;
+}
+
+.showtime:hover { background-color:#ff9800; }
+.showtime.selected { background-color:#00e676; }
+
+.seats { display:grid; grid-template-columns:repeat(6,40px); gap:8px; margin:10px 0; }
+
+.seat {
+  width:40px; height:40px; background-color:#444; border-radius:5px;
+  cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.9em;
+  transition:0.3s;
+}
+
+.seat:hover { background-color:#ff9800; }
+.seat.selected { background-color:#00e676; }
+.seat.booked { background-color:#888; cursor:not-allowed; }
+
+.confirm-btn{
+  padding:12px 25px; font-size:1em; border-radius:8px; cursor:pointer;
+  margin-top:10px; color:#000; font-weight:bold; border:none; margin-right:10px;
+  transition:0.3s;
+}
+
+.confirm-btn { background-color:#ff9800; }
+.confirm-btn:hover { background-color:#ffa726; }
+
+
+
+.price { margin-top:10px; font-weight:bold; font-size:1.2em; }
+
+#bookedList {
+  margin:20px; padding:10px; background:rgba(0,0,0,0.6); border-radius:10px;
+}
+#bookedList h3 { margin-top:0; }
+.bookingItem { display:flex; justify-content:space-between; align-items:center; margin:5px 0; }
+.bookingItem button { padding:5px 10px; border:none; border-radius:5px; cursor:pointer; }
+.bookingItem button:hover { background-color:#e57373; }
+
+</style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="loginPage">
+<h1>Welcome to Movie Booking</h1>
+<input type="text" id="username" placeholder="Enter username">
+<input type="password" id="password" placeholder="Enter password">
+<button id="loginBtn">Login</button>
+
+</div>
+
+<header>Online Movie Ticket Booking</header>
+<div id="welcomeMsg"></div>
+
+<div class="movies" id="movies"></div>
+
+<!-- MODAL -->
+<div id="movieModal" class="modal">
+<div class="modal-content">
+  <span class="close">&times;</span>
+  <h2 id="movieTitle"></h2>
+  <p id="movieDesc"></p>
+  <p><strong>Duration:</strong> <span id="movieDuration"></span> min</p>
+  <p><strong>Theater:</strong> <span id="movieTheater"></span></p>
+
+  <h3>Select Showtime</h3>
+  <div class="showtimes" id="showtimes"></div>
+
+  <h3>Select Seats</h3>
+  <div class="seats" id="seats"></div>
+
+  <div class="price" id="totalPrice">Total Price: ₹0</div>
+
+  <button class="confirm-btn" id="confirmBtn">Confirm Booking</button>
+ 
+</div>
+</div>
+
+<!-- Booked Movies List -->
+<div id="bookedList"><h3>Your Bookings:</h3></div>
+
+<script>
+const seatPrice = 150; // ₹
+const defaultUsername='Samruddhi';
+const defaultPassword='8616';
+let username='';
+
+const loginPage=document.getElementById('loginPage');
+const loginBtn=document.getElementById('loginBtn');
+const usernameInput=document.getElementById('username');
+const passwordInput=document.getElementById('password');
+const welcomeMsg=document.getElementById('welcomeMsg');
+
+loginBtn.addEventListener('click',()=>{
+  if(usernameInput.value.trim()===''||passwordInput.value.trim()===''){
+    alert('Enter username and password.');
+    return;
+  }
+  if(usernameInput.value===defaultUsername && passwordInput.value===defaultPassword){
+    username=usernameInput.value;
+    loginPage.style.display='none';
+    welcomeMsg.textContent=`Welcome, ${username}! Choose your movie below.`;
+  }else{
+    alert('Incorrect username or password!');
+  }
+});
+
+// Movie data
+const movies=[
+  {title:"Avengers: Endgame",desc:"After Infinity War, universe is in ruins.",duration:181,theater:"Galaxy Cinema",image:"images (1).jpg",showtimes:["10:00 AM","1:00 PM","4:00 PM","7:00 PM"]},
+  {title:"Inception",desc:"A thief steals corporate secrets through dreams.",duration:148,theater:"IMAX Theater",image:"images.jpg",showtimes:["11:00 AM","2:00 PM","5:00 PM","8:00 PM"]},
+  {title:"The Dark Knight",desc:"Batman faces Joker, criminal mastermind.",duration:152,theater:"Grand Cinema",image:"download (2).jpg",showtimes:["12:00 PM","3:00 PM","6:00 PM","9:00 PM"]},
+  {title:"Joker",desc:"A mentally troubled comedian embarks on a downward spiral.",duration:122,theater:"Central Cinema",image:"download (3).jpg",showtimes:["10:30 AM","1:30 PM","4:30 PM","7:30 PM"]},
+  {title:"Journey 2: The Mysterious Island",desc:"A young adventurer explores a mysterious island.",duration:94,theater:"PVR",image: "download (4).jpg",showtimes:["11:15 AM","2:15 PM","5:15 PM","8:15 PM"]},
+  {title:"Jumanji",desc:"A magical board game unleashes adventure and danger.",duration:119,theater:"Fantasy Cinema",image:"download (5).jpg",showtimes:["10:00 AM","1:00 PM","4:00 PM","7:00 PM"]},
+  {title:"Dora the Explorer",desc:"Join Dora on a fun adventure to explore new places.",duration:80,theater:"Kids Cinema",image:"download (6).jpg",showtimes:["10:00 AM","12:30 PM","3:00 PM","5:30 PM"]},
+ {title:"Spider-Man: No Way Home",desc:"Spider-Man faces multiverse challenges and villains.",duration:148,theater:"Superhero Cinema",image:"download (7).jpg",showtimes:["11:00 AM","2:00 PM","5:00 PM","8:00 PM"]}
+];
+
+const moviesContainer=document.getElementById('movies');
+const modal=document.getElementById('movieModal');
+const closeModal=document.querySelector('.close');
+const movieTitle=document.getElementById('movieTitle');
+const movieDesc=document.getElementById('movieDesc');
+const movieDuration=document.getElementById('movieDuration');
+const movieTheater=document.getElementById('movieTheater');
+const showtimesContainer=document.getElementById('showtimes');
+const seatsContainer=document.getElementById('seats');
+const confirmBtn=document.getElementById('confirmBtn');
+const cancelBtn=document.getElementById('cancelBtn');
+const totalPrice=document.getElementById('totalPrice');
+const bookedList=document.getElementById('bookedList');
+
+let selectedMovie=null;
+let selectedShowtime=null;
+let selectedSeats=[];
+
+// Store booked seats globally
+const bookings={}; 
+// bookings[movieTitle] = { "10:00 AM":[1,3,5], ...}
+
+function updateBookedList(){
+  bookedList.innerHTML='<h3>Your Bookings:</h3>';
+  Object.keys(bookings).forEach(movie=>{
+    Object.keys(bookings[movie]).forEach(time=>{
+      bookings[movie][time].forEach(seat=>{
+        const div=document.createElement('div');
+        div.className='bookingItem';
+        div.innerHTML=`<span>${movie} | ${time} | Seat: ${seat} | ₹${seatPrice}</span> <button data-movie="${movie}" data-time="${time}" data-seat="${seat}">Cancel</button>`;
+        div.querySelector('button').addEventListener('click',e=>{
+          cancelBooking(e.target.dataset.movie,e.target.dataset.time,e.target.dataset.seat);
+        });
+        bookedList.appendChild(div);
+      });
+    });
+  });
+}
+
+function cancelBooking(movie,time,seat){
+  const index = bookings[movie][time].indexOf(Number(seat));
+  if(index>-1){
+    bookings[movie][time].splice(index,1);
+    updateBookedList();
+    alert(`Booking for ${movie} at ${time}, Seat ${seat} cancelled.`);
+  }
+}
+
+movies.forEach((movie,index)=>{
+  const card=document.createElement('div');
+  card.className='movie-card';
+  card.innerHTML=`<img src="${movie.image}" alt="${movie.title}"><h3>${movie.title}</h3>`;
+  card.addEventListener('click',()=>openModal(index));
+  moviesContainer.appendChild(card);
+});
+
+function openModal(index){
+  selectedMovie=movies[index];
+  selectedSeats=[];
+  selectedShowtime=null;
+
+  movieTitle.textContent=selectedMovie.title;
+  movieDesc.textContent=selectedMovie.desc;
+  movieDuration.textContent=selectedMovie.duration;
+  movieTheater.textContent=selectedMovie.theater;
+
+  showtimesContainer.innerHTML='';
+  selectedMovie.showtimes.forEach(time=>{
+    const btn=document.createElement('div');
+    btn.className='showtime';
+    btn.textContent=time;
+    btn.addEventListener('click',()=>{
+      selectedShowtime=time;
+      document.querySelectorAll('.showtime').forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+      renderSeats(); // refresh seat availability for selected showtime
+    });
+    showtimesContainer.appendChild(btn);
+  });
+
+  seatsContainer.innerHTML='';
+  totalPrice.textContent=`Total Price: ₹0`;
+  modal.style.display='block';
+}
+
+function renderSeats(){
+  seatsContainer.innerHTML='';
+  const movieTitle = selectedMovie.title;
+  const time = selectedShowtime;
+  if(!bookings[movieTitle]) bookings[movieTitle]={};
+  if(!bookings[movieTitle][time]) bookings[movieTitle][time]=[];
+
+  for(let i=1;i<=30;i++){
+    const seat=document.createElement('div');
+    seat.className='seat';
+    seat.textContent=i;
+    if(bookings[movieTitle][time].includes(i)) seat.classList.add('booked');
+
+    seat.addEventListener('click',()=>{
+      if(seat.classList.contains('booked')) return;
+      if(seat.classList.contains('selected')){
+        seat.classList.remove('selected');
+        selectedSeats = selectedSeats.filter(s=>s!==i);
+      } else {
+        seat.classList.add('selected');
+        selectedSeats.push(i);
+      }
+      totalPrice.textContent=`Total Price: ₹${selectedSeats.length*seatPrice}`;
+    });
+    seatsContainer.appendChild(seat);
+  }
+}
+
+closeModal.addEventListener('click',()=>modal.style.display='none');
+window.addEventListener('click',e=>{if(e.target==modal) modal.style.display='none';});
+
+confirmBtn.addEventListener('click',()=>{
+  if(!selectedShowtime || selectedSeats.length===0){
+    alert('Select showtime and seats!');
+    return;
+  }
+  if(!bookings[selectedMovie.title]) bookings[selectedMovie.title]={};
+  if(!bookings[selectedMovie.title][selectedShowtime]) bookings[selectedMovie.title][selectedShowtime]=[];
+
+  selectedSeats.forEach(s=>{
+    if(!bookings[selectedMovie.title][selectedShowtime].includes(s)){
+      bookings[selectedMovie.title][selectedShowtime].push(s);
+    }
+  });
+
+  alert(`Booking Confirmed!\nUser: ${username}\nMovie: ${selectedMovie.title}\nShowtime: ${selectedShowtime}\nSeats: ${selectedSeats.join(', ')}\nTotal Price: ₹${selectedSeats.length*seatPrice}`);
+  selectedSeats=[];
+  updateBookedList();
+  modal.style.display='none';
+});
+
+// Cancel selected seats (not booked yet)
+cancelBtn.addEventListener('click',()=>{
+  selectedSeats.forEach(s=>{
+    const seatDiv=Array.from(document.querySelectorAll('.seat')).find(se=>Number(se.textContent)===s);
+    if(seatDiv) seatDiv.classList.remove('selected');
+  });
+  selectedSeats=[];
+  totalPrice.textContent=`Total Price: ₹0`;
+});
+
+</script>
+</body>
+</html>
